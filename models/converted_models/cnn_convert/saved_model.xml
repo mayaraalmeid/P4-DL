@@ -1,0 +1,292 @@
+<?xml version="1.0"?>
+<net name="TensorFlow_Frontend_IR" version="11">
+	<layers>
+		<layer id="0" name="flatten_1_input" type="Parameter" version="opset1">
+			<data shape="?,93" element_type="f32" />
+			<output>
+				<port id="0" precision="FP32" names="flatten_1_input">
+					<dim>-1</dim>
+					<dim>93</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="1" name="sequential_1/flatten_1/Const" type="Const" version="opset1">
+			<data element_type="i64" shape="2" offset="0" size="16" />
+			<rt_info>
+				<attribute name="precise" version="0" />
+			</rt_info>
+			<output>
+				<port id="0" precision="I64" names="sequential_1/flatten_1/Const:0">
+					<dim>2</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="2" name="sequential_1/flatten_1/Reshape" type="Reshape" version="opset1">
+			<data special_zero="false" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>-1</dim>
+					<dim>93</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>2</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="sequential_1/flatten_1/Reshape:0">
+					<dim>-1</dim>
+					<dim>93</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="3" name="Transpose_1644_compressed" type="Const" version="opset1">
+			<data element_type="f16" shape="64, 93" offset="16" size="11904" />
+			<output>
+				<port id="0" precision="FP16">
+					<dim>64</dim>
+					<dim>93</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="4" name="Transpose_1644" type="Convert" version="opset1">
+			<data destination_type="f32" />
+			<rt_info>
+				<attribute name="decompression" version="0" />
+			</rt_info>
+			<input>
+				<port id="0" precision="FP16">
+					<dim>64</dim>
+					<dim>93</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32">
+					<dim>64</dim>
+					<dim>93</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="5" name="sequential_1/dense_2/MatMul" type="MatMul" version="opset1">
+			<data transpose_a="false" transpose_b="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>-1</dim>
+					<dim>93</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>64</dim>
+					<dim>93</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="sequential_1/dense_2/MatMul:0">
+					<dim>-1</dim>
+					<dim>64</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="6" name="Constant_1664_compressed" type="Const" version="opset1">
+			<data element_type="f16" shape="1, 64" offset="11920" size="128" />
+			<output>
+				<port id="0" precision="FP16">
+					<dim>1</dim>
+					<dim>64</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="7" name="Constant_1664" type="Convert" version="opset1">
+			<data destination_type="f32" />
+			<rt_info>
+				<attribute name="decompression" version="0" />
+			</rt_info>
+			<input>
+				<port id="0" precision="FP16">
+					<dim>1</dim>
+					<dim>64</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="8" name="sequential_1/dense_2/BiasAdd" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>-1</dim>
+					<dim>64</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="sequential_1/dense_2/BiasAdd:0">
+					<dim>-1</dim>
+					<dim>64</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="9" name="sequential_1/dense_2/Relu" type="ReLU" version="opset1">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>-1</dim>
+					<dim>64</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="sequential_1/dense_2/Relu:0">
+					<dim>-1</dim>
+					<dim>64</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="10" name="Transpose_1649_compressed" type="Const" version="opset1">
+			<data element_type="f16" shape="15, 64" offset="12048" size="1920" />
+			<output>
+				<port id="0" precision="FP16">
+					<dim>15</dim>
+					<dim>64</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="11" name="Transpose_1649" type="Convert" version="opset1">
+			<data destination_type="f32" />
+			<rt_info>
+				<attribute name="decompression" version="0" />
+			</rt_info>
+			<input>
+				<port id="0" precision="FP16">
+					<dim>15</dim>
+					<dim>64</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32">
+					<dim>15</dim>
+					<dim>64</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="12" name="sequential_1/dense_3/MatMul" type="MatMul" version="opset1">
+			<data transpose_a="false" transpose_b="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>-1</dim>
+					<dim>64</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>15</dim>
+					<dim>64</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="sequential_1/dense_3/MatMul:0">
+					<dim>-1</dim>
+					<dim>15</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="13" name="Constant_1665_compressed" type="Const" version="opset1">
+			<data element_type="f16" shape="1, 15" offset="13968" size="30" />
+			<output>
+				<port id="0" precision="FP16">
+					<dim>1</dim>
+					<dim>15</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="14" name="Constant_1665" type="Convert" version="opset1">
+			<data destination_type="f32" />
+			<rt_info>
+				<attribute name="decompression" version="0" />
+			</rt_info>
+			<input>
+				<port id="0" precision="FP16">
+					<dim>1</dim>
+					<dim>15</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>15</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="15" name="sequential_1/dense_3/BiasAdd" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>-1</dim>
+					<dim>15</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>15</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="sequential_1/dense_3/BiasAdd:0">
+					<dim>-1</dim>
+					<dim>15</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="16" name="sequential_1/dense_3/Softmax" type="SoftMax" version="opset8">
+			<data axis="-1" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>-1</dim>
+					<dim>15</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="dense_3">
+					<dim>-1</dim>
+					<dim>15</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="17" name="dense_3" type="Result" version="opset1">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>-1</dim>
+					<dim>15</dim>
+				</port>
+			</input>
+		</layer>
+	</layers>
+	<edges>
+		<edge from-layer="0" from-port="0" to-layer="2" to-port="0" />
+		<edge from-layer="1" from-port="0" to-layer="2" to-port="1" />
+		<edge from-layer="2" from-port="2" to-layer="5" to-port="0" />
+		<edge from-layer="3" from-port="0" to-layer="4" to-port="0" />
+		<edge from-layer="4" from-port="1" to-layer="5" to-port="1" />
+		<edge from-layer="5" from-port="2" to-layer="8" to-port="0" />
+		<edge from-layer="6" from-port="0" to-layer="7" to-port="0" />
+		<edge from-layer="7" from-port="1" to-layer="8" to-port="1" />
+		<edge from-layer="8" from-port="2" to-layer="9" to-port="0" />
+		<edge from-layer="9" from-port="1" to-layer="12" to-port="0" />
+		<edge from-layer="10" from-port="0" to-layer="11" to-port="0" />
+		<edge from-layer="11" from-port="1" to-layer="12" to-port="1" />
+		<edge from-layer="12" from-port="2" to-layer="15" to-port="0" />
+		<edge from-layer="13" from-port="0" to-layer="14" to-port="0" />
+		<edge from-layer="14" from-port="1" to-layer="15" to-port="1" />
+		<edge from-layer="15" from-port="2" to-layer="16" to-port="0" />
+		<edge from-layer="16" from-port="1" to-layer="17" to-port="0" />
+	</edges>
+	<rt_info>
+		<MO_version value="2024.0.0-14509-34caeefd078-releases/2024/0" />
+		<Runtime_version value="2024.0.0-14509-34caeefd078-releases/2024/0" />
+		<conversion_parameters>
+			<is_python_api_used value="False" />
+			<saved_model_dir value="DIR" />
+		</conversion_parameters>
+		<legacy_frontend value="False" />
+	</rt_info>
+</net>
