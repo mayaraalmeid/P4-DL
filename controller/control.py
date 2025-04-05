@@ -645,7 +645,6 @@ def run_inference(data):
 
     pacotes_originais = []
     for _, row in data.iterrows():
-        # Captura informações originais do pacote antes do pré-processamento
         pacote_info = {
             "src_ip": row.get("src_addr"),
             "dst_ip": row.get("dst_addr"),
