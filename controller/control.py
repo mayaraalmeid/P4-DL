@@ -20,11 +20,16 @@ from sklearn.preprocessing import StandardScaler
 from sklearn import preprocessing
 import joblib
 import warnings
+import traceback
 
 
 device_id = 1
 P4INFO = os.getenv('P4INFO', 'my_switch.p4info.txt')
 P4BIN = os.getenv('P4BIN', 'my_switch.json')
+
+_repo_root = os.path.join(os.path.dirname(__file__), '..')
+MODEL_PATH = os.getenv('MODEL_PATH', os.path.join(_repo_root, 'models', 'converted_models', 'cnn_convert', 'saved_model.xml'))
+SCALER_PATH = os.getenv('SCALER_PATH', os.path.join(_repo_root, 'models', 'scaler.pkl'))
 digest1_id = 389926700  # Digest 1
 digest2_id = 400421736  # Digest 2 
 digest3_id = 388292598  # Digest 3
@@ -289,43 +294,33 @@ def process_digest3(digest):
 def extract_dns_fields(bitstring):
     index = 0
     bitstring_length = len(bitstring)
-    print(f"Processing bitstring of length {bitstring_length} bytes.") 
 
     domain_parts = []
     while index < bitstring_length:
         length = bitstring[index]
-        print(f"Length byte: {length}") 
         index += 1
-        if length == 0:  
-            print("End of domain name detected.")  
+        if length == 0:
             break
         if index + length > bitstring_length:
             raise IndexError("Bitstring muito curto para extrair o nome do domínio")
-        
+
         part = bitstring[index:index + length]
-        print(f"Domain part (raw): {part}") 
         try:
-            domain_parts.append(part.decode('ascii'))  
+            domain_parts.append(part.decode('ascii'))
         except UnicodeDecodeError:
-            print(f"Failed to decode part: {part.hex()}")  
-            domain_parts.append(part.hex())  
+            domain_parts.append(part.hex())
         index += length
 
     domain_name = '.'.join(domain_parts)
-    print(f"Domain Name Extracted: {domain_name}")  
 
- 
     if index + 2 > bitstring_length:
         raise IndexError("Bitstring muito curto para extrair o tipo de query")
     query_type = int.from_bytes(bitstring[index:index + 2], byteorder='big')
-    print(f"Query Type: {query_type}") 
     index += 2
-
 
     if index + 2 > bitstring_length:
         raise IndexError("Bitstring muito curto para extrair a classe de query")
     query_class = int.from_bytes(bitstring[index:index + 2], byteorder='big')
-    print(f"Query Class: {query_class}")
     index += 2
 
     return {
@@ -337,13 +332,11 @@ def extract_dns_fields(bitstring):
 
 def process_digest4(digest):
     global dados
-    for _, tuple_data in enumerate(digest.data): 
+    for _, tuple_data in enumerate(digest.data):
         concatenated_bitstring = b""
-        #print(digest.data)
         for member_idx, member in enumerate(tuple_data.tuple.members):
-            #print(f"Member {member_idx} bitstring: {member.bitstring}")
             concatenated_bitstring += member.bitstring
-        
+
         try:
             dns_data = extract_dns_fields(concatenated_bitstring)
             digest_data = {
@@ -351,32 +344,14 @@ def process_digest4(digest):
                 "dns.qry.type": dns_data['query_type'],
                 "dns.qry.class": dns_data['query_class']
             }
-
-            #print(f"Digest Data: {digest_data}")
         except IndexError as e:
-            print(f"Erro ao processar digest: {e}")
+            logging.warning(f"Erro ao processar digest DNS: {e}")
+            return
 
-
-
-        # concatenated_bitstring_str = ''.join(
-        #     f"\\{byte:03o}" if byte < 32 or byte > 126 else chr(byte)
-        #     for byte in concatenated_bitstring
-        # )
-
-        # dns_data = extract_dns_fields_extended(concatenated_bitstring)
-
-        # digest_data = {
-        #     "dns.qry.type": dns_data['query_type'],
-        #     "dns.qry.name": dns_data['domain_name'],
-        #     "dns.qry.class": dns_data['query_class'],
-        #     "dns.transaction_id": dns_data['transaction_id'],
-        #     "dns.flags": dns_data['flags']
-        # }
-        # if(not aux_queue.empty()):
-        #     digest_anterior = aux_queue.get()
-        #     digest_full = {**digest_anterior, **digest_data}
-        #     process_proto(digest_full)
-        #     return
+        if not aux_queue.empty():
+            digest_anterior = aux_queue.get()
+            digest_full = {**digest_anterior, **digest_data}
+            process_proto(digest_full)
 
 
 def process_digest5(digest):
@@ -511,7 +486,7 @@ def process_digest7(digest):
     for _, tuple_data in enumerate(digest.data):
         mbtcp_len = None
         mbtcp_trans_id = None
-        mbtcp_unit_id - None
+        mbtcp_unit_id = None
         for member_idx, member in enumerate(tuple_data.tuple.members):
             member_value_decimal = reverse_bytes(member)
             if member_idx == 0:
@@ -607,6 +582,8 @@ def stream(stub):
     logging.info('Handshake concluído')
     return recv_thread
 
+MAX_ROWS = 10000
+
 def process_proto(digest):
     global dados
 
@@ -623,6 +600,8 @@ def process_proto(digest):
 
     if not df_novos_dados.empty:
         dados = pd.concat([dados, df_novos_dados], ignore_index=True)
+        if len(dados) > MAX_ROWS:
+            dados = dados.iloc[-MAX_ROWS:]
 
         if not dados.empty:
             inference_thread = threading.Thread(target=run_inference, args=(dados.iloc[-1:],))
@@ -635,13 +614,15 @@ def encode_text_dummy(dados, name):
         dados = pd.concat([dados, dummies], axis=1)  
     return dados  
 
+_core = Core()
+_compiled_model = _core.compile_model(MODEL_PATH, "CPU")
+_scaler = joblib.load(SCALER_PATH)
+logging.info(f"Modelo carregado: {MODEL_PATH}")
+
 ataques_detectados = []
 def run_inference(data):
-    core = Core()
-    compiled_model = core.compile_model("/home/pi/cnn2/saved_model.xml", "CPU")
-   # compiled_model = core.compile_model("/home/pi/modelos_convertidos/gru_convert/saved_model.xml", "CPU")
-    #compiled_model = core.compile_model("/home/pi/modelos_convertidos/lstm_convert/saved_model.xml", "CPU")
-    scaler = joblib.load("/home/pi/scaler.pkl")
+    compiled_model = _compiled_model
+    scaler = _scaler
 
     pacotes_originais = []
     for _, row in data.iterrows():
